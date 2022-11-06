@@ -31,6 +31,8 @@ ALLOWED_HOSTS = ["159.69.196.15"]
 # Application definition
 
 INSTALLED_APPS = [
+    'daphne',
+    'channels',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -140,4 +142,12 @@ LOGGING = {
         'handlers': ['console'],
         'level': 'DEBUG',
     },
+}
+
+ASGI_APPLICATION = "RTS_Server.asgi.application"
+
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels.layers.InMemoryChannelLayer"
+    }
 }
