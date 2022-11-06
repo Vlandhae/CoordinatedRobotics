@@ -51,7 +51,7 @@ class CarConsumer(WebsocketConsumer):
         com = event.get("command", None)
         if com is None:
             return        
-        if com in rts.car_data.command_list and self.car is not None:
-            self.car.current_command = com
+        if com.upper() in rts.car_data.command_list and self.car is not None:
+            self.car.current_command = com.upper()
             self.car.save()
         self.send(text_data=json.dumps({"command":com}))
