@@ -16,3 +16,4 @@ class CarSessionSerializer(serializers.ModelSerializer):
     class Meta:
         model = CarSession
         fields = ["id", "cars"]
+        read_only_fields=["cars"]

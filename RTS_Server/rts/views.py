@@ -1,175 +1,139 @@
 import json
 from django.shortcuts import render
+from asgiref.sync import async_to_sync
 from rts.models import Somedata, Car, CarSession
 from rts.serializers import SomedataSerializer, CarSerializer, CarSessionSerializer
 from django.http import HttpResponse, JsonResponse, HttpRequest
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.parsers import JSONParser
-from rts.car_data import command_list
+from rts.constants import COMMAND_LIST, GROUP_CLOSING_COMMAND
+from channels.layers import get_channel_layer
+from rest_framework.decorators import api_view
+from rest_framework import generics
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from rest_framework.schemas.openapi import AutoSchema
+import coreapi
+import coreschema
+#TODO cleanup
+
+class SomedataList(generics.ListCreateAPIView):
+    queryset = Somedata.objects.all()
+    serializer_class = SomedataSerializer
+
+class SomedataDetail(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Somedata.objects.all()
+    serializer_class = SomedataSerializer
+    lookup_field = "key"
+    lookup_url_kwarg = "key"
+
+class CarList(generics.ListCreateAPIView):
+    queryset = Car.objects.all()
+    serializer_class = CarSerializer
+
+class CarDetail(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Car.objects.all()
+    serializer_class = CarSerializer
+    lookup_field = "name"
+    lookup_url_kwarg = "name"
+
+class CarSessionList(generics.ListCreateAPIView):
+    queryset = CarSession.objects.all()
+    serializer_class = CarSessionSerializer
+    lookup_field = "id"    
+
+class CarSessionDetails(generics.RetrieveDestroyAPIView):
+    queryset = CarSession.objects.all()
+    serializer_class = CarSessionSerializer
+    lookup_field = "id"
+    lookup_url_kwarg = "id"
 
 
-@csrf_exempt
-def somedata_list(request:HttpRequest):
-    print(request.session)
+class EditCarSession(APIView):
+    """
+    Add cars to the session
+    Include the name of the car in the body, either as text/plain with only the name in the body
+    or as application/json with {"car":<carname>} in the body
+    """    
     
-    if request.method == "GET":
-        data = Somedata.objects.all()
-        serializer = SomedataSerializer(data, many=True)
-        return JsonResponse(serializer.data, safe=False)
-    elif request.method == "POST":
-        data = JSONParser().parse(request)
-        serializer = SomedataSerializer(data=data)
-        if serializer.is_valid():
-            serializer.save()
-            return JsonResponse(serializer.data, status=201)
-        else:
-            return JsonResponse(serializer.errors, status=400)      
-    else:
-        return JsonResponse({"error":"unsuported operation"}, status=400)
+    def get_data(self, request, id):
+        # TODO review
+        try:
+            self.channel_layer = get_channel_layer()
+            self.sess:CarSession = CarSession.objects.get(id=id)
+        except CarSession.DoesNotExist: 
+            return Response(data={"error":"session does not exist"},status=404)    
+        try: 
+            if request.content_type == "application/json":
+                data = json.loads(request.body.decode())
+                self.car_name = data.get("car", "")
+            elif len(request.body) > 0:
+                self.car_name = request.body.decode()
+            else:
+                return Response(data={"error" : "body does not specify the car"}, status=400 )
+            self.car:Car = Car.objects.get(name=self.car_name)
+        except:
+            return Response(data={"error":"the specified car does not exist"}, status=404)
+        if self.car.channel_name == "":
+            return JsonResponse(data={"error":"the car doesn't have a valid channel name. Check if the car is connected"})
+        return None
+        
+    def post(self, request, id):       
+        print(self.schema)
+        resp = self.get_data(request, id)
+        if resp != None:
+            return resp
+        # add the cars websocket channel to the session group
+        async_to_sync(self.channel_layer.group_add)(
+            f"group_{self.sess.id}", self.car.channel_name
+        )
+        self.sess.cars.add(self.car)
+        self.sess.save()
+        serializer = CarSessionSerializer(self.sess)
+        return JsonResponse(serializer.data)        
 
-@csrf_exempt
-def somedata(request, key):
-    try:
-        element = Somedata.objects.get(key=key)
-    except Somedata.DoesNotExist:
-        return HttpResponse(status=404)
+
+
+class CarSessionCarsDetail(APIView):
+    """
+    Remove cars from the session
+    """
+    def get_data(self, request, id, name):
+        # TODO review
+        try:
+            self.channel_layer = get_channel_layer()
+            self.sess:CarSession = CarSession.objects.get(id=id)
+        except CarSession.DoesNotExist: 
+            return Response(data={"error":"session does not exist"},status=404)    
+        try:
+            self.car:Car = Car.objects.get(name=name)
+        except:
+            return Response(data={"error":"the specified car does not exist"}, status=404)
+        if self.car.channel_name == "":
+            return JsonResponse(data={"error":"the car doesn't have a valid channel name. Check if the car is connected"})
+        return None     
     
-    if request.method == "GET":
-        serializer = SomedataSerializer(element)
+    def delete(self, request, id, name):
+        self.get_data(request, id, name)
+        # remove the cars websocket channel from the session group
+        async_to_sync(self.channel_layer.group_discard)(
+            f"group_{self.sess.id}", self.car.channel_name
+        )
+        self.sess.cars.remove(self.car)
+        serializer = CarSessionSerializer(self.sess)
         return JsonResponse(serializer.data)
-    elif request.method == "PUT":
-        data = JSONParser().parse(request)
-        serializer = SomedataSerializer(element, data=data)
-        if serializer.is_valid():
-            serializer.save()
-            return JsonResponse(serializer.data)
-        else:
-            return JsonResponse(serializer.errors, status=400)
-    elif request.method == "DELETE": 
-        element.delete()
-        return HttpResponse(status=204)
+
+
 
 @csrf_exempt
-def session_test(request:HttpRequest):
-    return JsonResponse({"id" : list(request.session.items())})
-
-@csrf_exempt
-def car_root(request:HttpRequest):
-    if request.method == "GET":
-        data = Car.objects.all()
-        serializer = CarSerializer(data, many=True)
-        return JsonResponse(serializer.data, safe=False)
-    if request.method == "POST":
-        data = JSONParser().parse(request)
-        serializer = CarSerializer(data=data)
-        if serializer.is_valid():
-            serializer.save()
-            return JsonResponse(serializer.data, status=201)
-        else:
-            return JsonResponse(serializer.errors, status=400)      
-    else:
-        return JsonResponse({"error":"unsuported operation"}, status=400)
-
-@csrf_exempt
-def car_individual(request : HttpRequest, name):
-    try:
-        c = Car.objects.get(name=name)
-    except Car.DoesNotExist:
-        return HttpResponse(status=404)
-    if request.method == "GET":
-        serializer = CarSerializer(c)
-        return JsonResponse(serializer.data)
-    elif request.method == "PUT":
-        data = JSONParser().parse(request)
-        serializer = CarSerializer(c, data=data)
-        if serializer.is_valid():
-            serializer.save()
-            return JsonResponse(serializer.data)
-        else:
-            return JsonResponse(serializer.errors, status=400)
-    elif request.method == "DELETE": 
-        c.delete()
-        return HttpResponse(status=204)
-
-@csrf_exempt
-def car_current_command(request : HttpRequest, name):
-    try:
-        c = Car.objects.get(name=name)
-    except Car.DoesNotExist:
-        return HttpResponse(status=404)
-    # GET is used to retrieve the command
-    if request.method == "GET":
-        format = request.GET.get("format", "")
-        # depending on format query parameter either return json or raw command in body
-        if format.lower() == "json":
-            return JsonResponse({"command":c.current_command})
-        else:
-            response = HttpResponse(c.current_command)
-            response["Content-Type"] = "text/plain"
-            return response
-    # POST or PUT are used to update the command
-    if request.method in ["PUT", "POST"] and request.body.count:
-        # check the content type of the data and process accordingly
-        if request.content_type == "application/x-www-form-urlencoded":
-            # extract the command from the form and check its format
-            data = request.POST.values().get("command", None)
-            if data is None or len(data) < 1:
-                return JsonResponse({"error":"POST form data did not contain command key"}, status=400)
-            elif len(data) > 1:
-                return JsonResponse({"error":"Form data contained invalid key"}, status=400)
-        # if the data is not a form check if the body is just the command 
-        elif request.body.count() == 1:
-            data = request.body.decode()
-        # check if the command is valid
-        if data not in command_list:
-            return JsonResponse({"error":"command %s does not exist" % data}, status=400)
-            
-        # here we can assume that a command was passed and is correct
-        c.current_command = data
-        c.save()
-
-@csrf_exempt
-def car_session_root(request : HttpRequest):
-    if request.method == "GET":
-        data = CarSession.objects.all()
-        serializer = CarSessionSerializer(data, many=True)
-        return JsonResponse(serializer.data, safe=False)
-    if request.method == "POST":
-        data = JSONParser().parse(request)
-        serializer = CarSessionSerializer(data=data)
-        if serializer.is_valid():
-            serializer.save()
-            return JsonResponse(serializer.data, status=201)
-        else:
-            return JsonResponse(serializer.errors, status=400)      
-    else:
-        return JsonResponse({"error":"unsuported operation"}, status=400)
-
-
-def individual_car_session(request : HttpRequest, id):
-    try:
-        sess = CarSession.objects.get(id=id)
-    except CarSession.DoesNotExist: 
-        return HttpResponse(status=404)    
-    if request.method == "GET":
-        return JsonResponse(CarSessionSerializer(sess).data)
-    elif request.method == "PUT":
-        data = JSONParser().parse(request)
-        serializer = CarSessionSerializer(sess, data=data)
-        if serializer.is_valid():
-            serializer.save()
-            return JsonResponse(serializer.data, status=201)
-        else:
-            return JsonResponse(serializer.errors, status=400)      
-    elif request.method == "DELETE":
-        sess.delete()
-        return HttpResponse(status=204)
-    return JsonResponse({"erorr":"unsupported operation"}, status=400)
-
-@csrf_exempt
+@api_view(["DELETE","POST"])
 def edit_car_session(request : HttpRequest, id):
+    """
+
+    """
     try:
-        sess = CarSession.objects.get(id=id)
+        channel_layer = get_channel_layer()
+        sess:CarSession = CarSession.objects.get(id=id)
     except CarSession.DoesNotExist: 
         return JsonResponse({"error":"session does not exist"},status=404)    
     try: 
@@ -183,14 +147,23 @@ def edit_car_session(request : HttpRequest, id):
         car = Car.objects.get(name=car_name)
     except:
         return JsonResponse({"error":"the specified car does not exist"}, status=404)
+    if car.channel_name == "":
+        return JsonResponse({"error":"the car doesn't have a valid channel name. Check if the car is connected"})
     if request.method == "POST":
+        # add the cars websocket channel to the session group
+        async_to_sync(channel_layer.group_add)(
+            f"group_{sess.id}", car.channel_name
+        )
         sess.cars.add(car)
         sess.save()
         serializer = CarSessionSerializer(sess)
         return JsonResponse(serializer.data)
     elif request.method == "DELETE":
+        # remove the cars websocket channel from the session group
+        async_to_sync(channel_layer.group_discard)(
+            f"group_{sess.id}", car.channel_name
+        )
         sess.cars.remove(car)
         serializer = CarSessionSerializer(sess)
         return JsonResponse(serializer.data)
     return JsonResponse({"error":"invalid operation"}, status=400)
-

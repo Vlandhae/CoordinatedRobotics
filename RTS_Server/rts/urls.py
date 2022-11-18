@@ -2,14 +2,14 @@ from django.urls import path
 from rts import views
 
 urlpatterns = [
-    path('rts/', views.somedata_list),
-    path('rts/<key>/', views.somedata),
-    path('sessions/', views.session_test),
-    path("cars/", views.car_root),
-    path("cars/sessions/", views.car_session_root),
-    path("cars/sessions/<id>/", views.individual_car_session),
-    path("cars/sessions/<id>/cars/", views.edit_car_session),  
-    path("cars/<name>/", views.car_individual),
-    path("cars/<name>/command/", views.car_current_command),
+    path('rts/', views.SomedataList.as_view()),
+    path('rts/<key>/', views.SomedataDetail.as_view()),
+    path("cars/", views.CarList.as_view()),
+    path("cars/sessions/", views.CarSessionList.as_view()),
+    path("cars/sessions/<id>/", views.CarSessionDetails.as_view()),
+    path("cars/sessions/<id>/cars/", views.EditCarSession.as_view()),  
+    path("cars/sessions/<id>/cars/<name>/", views.CarSessionCarsDetail.as_view()),
+    path("cars/<name>/", views.CarDetail.as_view()),
+    #path("cars/<name>/command/", views.car_current_command),
 
 ]
