@@ -18,31 +18,49 @@ import coreschema
 #TODO cleanup
 
 class SomedataList(generics.ListCreateAPIView):
+    """
+    List existing kv pairs and create new ones
+    """
     queryset = Somedata.objects.all()
     serializer_class = SomedataSerializer
 
 class SomedataDetail(generics.RetrieveUpdateDestroyAPIView):
+    """
+    View, edit and delete existing kv pairs
+    """
     queryset = Somedata.objects.all()
     serializer_class = SomedataSerializer
     lookup_field = "key"
     lookup_url_kwarg = "key"
 
 class CarList(generics.ListCreateAPIView):
+    """
+    List existing cars and create new ones
+    """
     queryset = Car.objects.all()
     serializer_class = CarSerializer
 
 class CarDetail(generics.RetrieveUpdateDestroyAPIView):
+    """
+    View, update and delete specific existing cars
+    """
     queryset = Car.objects.all()
     serializer_class = CarSerializer
     lookup_field = "name"
     lookup_url_kwarg = "name"
 
 class CarSessionList(generics.ListCreateAPIView):
+    """
+    List and create sessions
+    """
     queryset = CarSession.objects.all()
     serializer_class = CarSessionSerializer
     lookup_field = "id"    
 
 class CarSessionDetails(generics.RetrieveDestroyAPIView):
+    """
+    View, update or delete existing sessions (to update cars use the .../sessions/<id>/cars endpoint)
+    """
     queryset = CarSession.objects.all()
     serializer_class = CarSessionSerializer
     lookup_field = "id"

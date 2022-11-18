@@ -15,13 +15,25 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
-from rest_framework import routers
-
+from django.views.generic import TemplateView
+from rest_framework.schemas import get_schema_view
+from django.conf.urls.static import static
+from RTS_Server import settings
 
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include("rts.urls")),
-    path('api-auth/', include('rest_framework.urls', namespace='rest_framework'),    
-    )
-]
+    path('api-auth/', include('rest_framework.urls', namespace='rest_framework')),
+   # path('docs/', include_docs_urls(title='My API title', permission_classes=[permissions.AllowAny], public=True)),
+    path('docs/', TemplateView.as_view(
+        template_name='swagger-ui.html',
+        extra_context={'schema_url':'openapi-schema'}
+    ), name='swagger-ui'),
+     path('openapi/', get_schema_view(
+            title="Your Project",
+            description="API for all things …",
+            version="1.0.0",            
+            patterns=[path('', include("rts.urls")),]
+        ), name='openapi-schema'),
+] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
