@@ -12,9 +12,8 @@ from rest_framework.decorators import api_view
 from rest_framework import generics
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework.schemas.openapi import AutoSchema
-import coreapi
-import coreschema
+import rts.custom_schemas as custom_schema
+
 #TODO cleanup
 
 class SomedataList(generics.ListCreateAPIView):
@@ -33,12 +32,45 @@ class SomedataDetail(generics.RetrieveUpdateDestroyAPIView):
     lookup_field = "key"
     lookup_url_kwarg = "key"
 
-class CarList(generics.ListCreateAPIView):
+class CarList(generics.ListAPIView):
     """
     List existing cars and create new ones
     """
     queryset = Car.objects.all()
     serializer_class = CarSerializer
+
+
+
+
+class RegisterCar(generics.GenericAPIView):
+    """
+    Register a new car (should only be used by cars)
+    Returns the id of the newly created car as plaintext
+    """    
+    serializer_class = CarSerializer
+    queryset = Car.objects.all()
+    schema = custom_schema.RegisterCarSchema()
+    def post(self, request):
+        # TODO remove
+        print(self.schema.get_components(path="/cars/{name}/", method="get"))
+        # TODO decide if this supports any content types beside json
+        # get the car data from the request
+        if request.content_type == "application/json":
+            #data = JSONParser.parse(request)
+            data = request.data
+            print(data)
+            serializer = CarSerializer(data=data)
+            if serializer.is_valid():
+                serializer.save()
+                # return the id in plain format so the car doesn't have to parse JSON
+                id = serializer.data.get("id", "")
+                return HttpResponse(id, status=201, content_type="text/plain")
+            else:
+                return Response(serializer.errors, status=400)            
+            
+        else: 
+            return Response("Invalid Content-Type", status="415")
+        
 
 class CarDetail(generics.RetrieveUpdateDestroyAPIView):
     """
@@ -46,8 +78,8 @@ class CarDetail(generics.RetrieveUpdateDestroyAPIView):
     """
     queryset = Car.objects.all()
     serializer_class = CarSerializer
-    lookup_field = "name"
-    lookup_url_kwarg = "name"
+    lookup_field = "id"
+    lookup_url_kwarg = "id"
 
 class CarSessionList(generics.ListCreateAPIView):
     """
@@ -66,15 +98,15 @@ class CarSessionDetails(generics.RetrieveDestroyAPIView):
     lookup_field = "id"
     lookup_url_kwarg = "id"
 
-
+ 
 class EditCarSession(APIView):
     """
     Add cars to the session
-    Include the name of the car in the body, either as text/plain with only the name in the body
-    or as application/json with {"car":<carname>} in the body
-    """    
-    
-    def get_data(self, request, id):
+    Include the id of the car in the body, either as text/plain with only the id in the body
+    or as application/json with {"car":<car_id>} in the body
+    """  
+    schema = custom_schema.EditCarSessionSchema()      
+    def get_data(self, request, id):        
         # TODO review
         try:
             self.channel_layer = get_channel_layer()
@@ -84,12 +116,12 @@ class EditCarSession(APIView):
         try: 
             if request.content_type == "application/json":
                 data = json.loads(request.body.decode())
-                self.car_name = data.get("car", "")
+                self.car_id = data.get("car", "")
             elif len(request.body) > 0:
-                self.car_name = request.body.decode()
+                self.car_id = request.body.decode()
             else:
                 return Response(data={"error" : "body does not specify the car"}, status=400 )
-            self.car:Car = Car.objects.get(name=self.car_name)
+            self.car:Car = Car.objects.get(id=self.car_id)
         except:
             return Response(data={"error":"the specified car does not exist"}, status=404)
         if self.car.channel_name == "":
@@ -99,6 +131,7 @@ class EditCarSession(APIView):
     def post(self, request, id):       
         print(self.schema)
         resp = self.get_data(request, id)
+        # if any errors occured during the car retrieval get_data returns an error response
         if resp != None:
             return resp
         # add the cars websocket channel to the session group
