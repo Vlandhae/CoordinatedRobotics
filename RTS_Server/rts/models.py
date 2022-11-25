@@ -5,8 +5,8 @@ class Somedata(models.Model):
     value = models.TextField()
 
 class Car(models.Model):
-    name = models.TextField(primary_key = True)
-    current_command = models.CharField(max_length=1)
+    name = models.TextField(blank=False)
+    current_command = models.CharField(max_length=1, default="I")
     # this has to be cleared whenever the car session disconnects
     channel_name = models.TextField(default="")
 
