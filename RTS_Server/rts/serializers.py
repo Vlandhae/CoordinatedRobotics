@@ -10,7 +10,7 @@ class SomedataSerializer(serializers.ModelSerializer):
 class CarSerializer(serializers.ModelSerializer):
     class Meta:
         model = Car
-        fields = ["name", "current_command"]
+        fields = ["id", "name", "current_command"]
 
 class CarSessionSerializer(serializers.ModelSerializer):
     class Meta:
