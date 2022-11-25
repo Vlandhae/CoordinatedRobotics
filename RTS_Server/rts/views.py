@@ -122,10 +122,12 @@ class EditCarSession(APIView):
             else:
                 return Response(data={"error" : "body does not specify the car"}, status=400 )
             self.car:Car = Car.objects.get(id=self.car_id)
+            print(self.car.name)
+            print(self.car.channel_name)
         except:
             return Response(data={"error":"the specified car does not exist"}, status=404)
         if self.car.channel_name == "":
-            return JsonResponse(data={"error":"the car doesn't have a valid channel name. Check if the car is connected"})
+            return JsonResponse(data={"error":"the car doesn't have a valid channel name. Check if the car is connected"}, status=400)
         return None
         
     def post(self, request, id):       

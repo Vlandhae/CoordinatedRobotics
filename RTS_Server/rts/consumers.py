@@ -8,7 +8,7 @@ from rts.constants import GROUP_CLOSING_COMMAND, COMMAND_LIST
 
 class CarConsumer(WebsocketConsumer):
     def connect(self):
-        self.room_name = self.scope["url_route"]["kwargs"]["car_name"]
+        self.room_name = self.scope["url_route"]["kwargs"]["car_id"]
         self.room_group_name = f"group_{self.room_name}"
         print(self.room_group_name)
         # Join room group
@@ -17,12 +17,13 @@ class CarConsumer(WebsocketConsumer):
         )
 
         try: 
-            self.car = Car.objects.get(name=self.room_name)                
+            self.car = Car.objects.get(id=self.room_name)                
             print(f"{self.room_name} : {self.channel_name}")
             # TODO this shoudl only happen when the car joins the channel maybe specific message
             self.car.channel_name = self.channel_name
             self.car.save()
         except Car.DoesNotExist:
+            print("Websocket car not found")
             pass
 
         self.accept()
@@ -83,6 +84,7 @@ class SessionConsumer(WebsocketConsumer):
         async_to_sync(self.channel_layer.group_add)(
             self.room_group_name, self.channel_name
         )
+        self.accept()
 
     def command(self, event):
         print(event)
