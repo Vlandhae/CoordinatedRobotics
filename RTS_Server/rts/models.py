@@ -9,6 +9,7 @@ class Car(models.Model):
     current_command = models.CharField(max_length=1, default="I")
     # this has to be cleared whenever the car session disconnects
     channel_name = models.TextField(default="")
+    connected = models.BooleanField(default=False)
 
 
 class CarSession(models.Model):

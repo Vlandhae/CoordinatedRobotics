@@ -19,8 +19,7 @@ class RegisterCarSchema(AutoSchema):
                 'description': 'The id of the newly registered car in plaintext'
             }
         }
-        data["responses"] = responses
-        print(responses)
+        data["responses"] = responses        
         return data
 
 

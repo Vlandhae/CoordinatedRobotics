@@ -21,6 +21,7 @@ class CarConsumer(WebsocketConsumer):
             print(f"{self.room_name} : {self.channel_name}")
             # TODO this shoudl only happen when the car joins the channel maybe specific message
             self.car.channel_name = self.channel_name
+            self.car.connected = True
             self.car.save()
         except Car.DoesNotExist:
             print("Websocket car not found")
@@ -33,6 +34,10 @@ class CarConsumer(WebsocketConsumer):
         async_to_sync(self.channel_layer.group_discard)(
             self.room_group_name, self.channel_name
         )
+        # set the cars connected status to false
+        if self.car != None:
+            self.car.connected = False
+            self.car.save()
         print(f"disconnected {close_code}")
     
     def move(self, newChannel):
