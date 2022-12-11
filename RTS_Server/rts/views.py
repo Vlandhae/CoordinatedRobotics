@@ -67,7 +67,6 @@ class RegisterCar(generics.GenericAPIView):
                 return HttpResponse(id, status=201, content_type="text/plain")
             else:
                 return Response(serializer.errors, status=400)            
-            
         else: 
             return Response("Invalid Content-Type", status="415")
         
@@ -130,8 +129,7 @@ class EditCarSession(APIView):
             return JsonResponse(data={"error":"the car doesn't have a valid channel name. Check if the car is connected"}, status=400)
         return None
         
-    def post(self, request, id):       
-        print(self.schema)
+    def post(self, request, id):               
         resp = self.get_data(request, id)
         # if any errors occured during the car retrieval get_data returns an error response
         if resp != None:
@@ -151,7 +149,7 @@ class CarSessionCarsDetail(APIView):
     """
     Remove cars from the session
     """
-    def get_data(self, request, id, name):
+    def get_data(self, request, id, car_id):
         # TODO review
         try:
             self.channel_layer = get_channel_layer()
@@ -159,15 +157,15 @@ class CarSessionCarsDetail(APIView):
         except CarSession.DoesNotExist: 
             return Response(data={"error":"session does not exist"},status=404)    
         try:
-            self.car:Car = Car.objects.get(name=name)
+            self.car:Car = Car.objects.get(id=car_id)
         except:
             return Response(data={"error":"the specified car does not exist"}, status=404)
         if self.car.channel_name == "":
             return JsonResponse(data={"error":"the car doesn't have a valid channel name. Check if the car is connected"})
         return None     
     
-    def delete(self, request, id, name):
-        self.get_data(request, id, name)
+    def delete(self, request, id, car_id):
+        self.get_data(request, id, car_id)
         # remove the cars websocket channel from the session group
         async_to_sync(self.channel_layer.group_discard)(
             f"group_{self.sess.id}", self.car.channel_name
