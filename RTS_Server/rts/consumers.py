@@ -22,6 +22,17 @@ class CarConsumer(WebsocketConsumer):
             # TODO this shoudl only happen when the car joins the channel maybe specific message
             self.car.channel_name = self.channel_name
             self.car.connected = True
+            # TODO automatically join the sessions
+            sessions = CarSession.objects.filter(cars__id=self.car.id)
+            print("sessions", sessions)
+            for session in sessions:
+                # get the name of the session group
+                session_group = f"group_{session.id}"
+                # join the sessions group
+                async_to_sync(self.channel_layer.group_add)(
+                    session_group, self.channel_name
+                )       
+            
             self.car.save()
         except Car.DoesNotExist:
             print("Websocket car not found")
@@ -39,14 +50,8 @@ class CarConsumer(WebsocketConsumer):
             self.car.connected = False
             self.car.save()
         print(f"disconnected {close_code}")
+        print(f"CAR DISCONNECTED {close_code}")
     
-    def move(self, newChannel):
-        # TODO find out why no messages are received in the new group
-        async_to_sync(self.channel_layer.group_add)(
-            newChannel, self.channel_name
-        )
-        self.send("moved succesfully")
-
     def receive(self, text_data):
         msg = text_data
         print(msg)
@@ -57,8 +62,6 @@ class CarConsumer(WebsocketConsumer):
                 serializer = CarSerializer(self.car)
                 self.send(json.dumps(serializer.data))
             return
-        if msg=="move":
-            self.move("group_car3")
         if msg == GROUP_CLOSING_COMMAND:
             async_to_sync(self.channel_layer.group_discard)(self.room_group_name, self.channel_name)
         print(msg)
@@ -80,8 +83,7 @@ class CarConsumer(WebsocketConsumer):
         self.send(text_data=json.dumps({"command":com}))
 
 class SessionConsumer(WebsocketConsumer):
-    def connect(self):
-        # TODO add different rout for this and replace car_name
+    def connect(self):        
         self.room_name = self.scope["url_route"]["kwargs"]["session_name"]
         self.room_group_name = f"group_{self.room_name}"
         print(self.room_group_name)
@@ -97,9 +99,6 @@ class SessionConsumer(WebsocketConsumer):
         com = event.get("command", None)
         if com is None:
             return        
-        if com.upper() in COMMAND_LIST and self.car is not None:
-            self.car.current_command = com.upper()
-            self.car.save()
         self.send(text_data=json.dumps({"command":com}))
 
     def receive(self, text_data):
@@ -112,8 +111,6 @@ class SessionConsumer(WebsocketConsumer):
                 serializer = CarSerializer(self.car)
                 self.send(json.dumps(serializer.data))
             return
-        if msg=="move":
-            self.move("group_car3")
         if msg == GROUP_CLOSING_COMMAND:
             async_to_sync(self.channel_layer.group_discard)(self.room_group_name, self.channel_name)
         print(msg)
@@ -126,4 +123,4 @@ class SessionConsumer(WebsocketConsumer):
         async_to_sync(self.channel_layer.group_discard)(
             self.room_group_name, self.channel_name
         )
-        print(f"disconnected {close_code}")
+        print(f"SESSION DISCONNECT {close_code}")
