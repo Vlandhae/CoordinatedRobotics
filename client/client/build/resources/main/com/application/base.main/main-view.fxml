@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.MenuBar?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.shape.Line?>
+
+<AnchorPane fx:id="anchorPane" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/16" xmlns:fx="http://javafx.com/fxml/1">
+   <children>
+      <VBox prefHeight="200.0" prefWidth="100.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+         <children>
+            <MenuBar fx:id="menuBar" maxHeight="-Infinity" maxWidth="1.7976931348623157E308" minHeight="-Infinity" prefHeight="25.0" />
+            <HBox fx:id="contentContainer" prefHeight="100.0" prefWidth="200.0" VBox.vgrow="ALWAYS">
+               <children>
+                  <VBox fx:id="leftBox" fillWidth="false" maxWidth="-Infinity" minWidth="-Infinity" prefWidth="0.0" style="-fx-border-color: grey; -fx-border-width: 0 1 0 0;" visible="false" />
+                  <VBox prefHeight="200.0" prefWidth="100.0" HBox.hgrow="ALWAYS">
+                     <children>
+                        <HBox prefHeight="100.0" prefWidth="200.0" VBox.vgrow="ALWAYS">
+                           <children>
+                              <BorderPane fx:id="borderPane" HBox.hgrow="ALWAYS">
+                                 <top>
+                                    <AnchorPane fx:id="top" maxHeight="35.0" minHeight="35.0" prefHeight="35.0" style="-fx-border-style: solid inside; -fx-border-color: grey; -fx-border-width: 0 0 1 0;" BorderPane.alignment="CENTER" />
+                                 </top>
+                                 <left>
+                                    <AnchorPane fx:id="left" maxHeight="1.7976931348623157E308" minWidth="160.0" onMouseDragged="#mouseDraggedForLeftPart" onMouseMoved="#mouseMovedOverLeftPart" onMousePressed="#mousePressedOnLeftPart" onMouseReleased="#mouseReleasedForLeftPart" prefWidth="160.0" style="-fx-border-style: solid inside; -fx-border-color: grey; -fx-border-width: 0 1 0 0;" BorderPane.alignment="CENTER" />
+                                 </left>
+                                 <right>
+                                    <AnchorPane fx:id="right" maxHeight="1.7976931348623157E308" minWidth="160.0" onMouseDragged="#mouseDraggedForRightPart" onMouseMoved="#mouseMovedOverRightPart" onMousePressed="#mousePressedOnRightPart" onMouseReleased="#mouseReleasedForRightPart" prefWidth="160.0" style="-fx-border-style: solid inside; -fx-border-color: grey; -fx-border-width: 0 0 0 1;" BorderPane.alignment="CENTER" />
+                                 </right>
+                                 <bottom>
+                                    <AnchorPane fx:id="bottom" minHeight="100.0" onMouseDragged="#mouseDraggedForBottomPart" onMouseMoved="#mouseMovedOverBottomPart" onMousePressed="#mousePressedOnBottomPart" onMouseReleased="#mouseReleasedForBottomPart" prefHeight="100.0" prefWidth="200.0" style="-fx-border-style: solid inside; -fx-border-color: grey; -fx-border-width: 1 0 0 0;" BorderPane.alignment="CENTER" />
+                                 </bottom>
+                                 <center>
+                                    <AnchorPane fx:id="center" maxHeight="1.7976931348623157E308" minHeight="160.0" minWidth="160.0" prefHeight="200.0" prefWidth="200.0" BorderPane.alignment="CENTER" />
+                                 </center>
+                              </BorderPane>
+                           </children>
+                        </HBox>
+                        <HBox fx:id="bottomBox" maxHeight="-Infinity" minHeight="-Infinity" prefHeight="0.0" style="-fx-border-color: grey; -fx-border-width: 1 0 0 0;" visible="false" />
+                     </children>
+                  </VBox>
+                  <VBox fx:id="rightBox" maxWidth="-Infinity" minWidth="-Infinity" prefWidth="0.0" style="-fx-border-color: grey; -fx-border-width: 0 0 0 1;" visible="false" />
+               </children>
+            </HBox>
+         </children>
+      </VBox>
+      <Line fx:id="line" endX="0.0" fill="#bcb1b1" layoutY="0.0" startX="0.0" stroke="#85858580" strokeWidth="5.0" visible="false" />
+      <Button fx:id="explorerButton" focusTraversable="false" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" mnemonicParsing="false" onAction="#minimizedExplorerButtonAction" prefHeight="30.0" prefWidth="75.0" rotate="-90.0" style="-fx-background-color: transparent;" text="Explorer" visible="false" AnchorPane.leftAnchor="-25.0" AnchorPane.topAnchor="88.0" />
+      <Button fx:id="actionLogButton" focusTraversable="false" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" mnemonicParsing="false" onAction="#minimizedActionLogButtonAction" prefHeight="30.0" prefWidth="75.0" style="-fx-background-color: transparent;" text="Action log" visible="false" AnchorPane.bottomAnchor="-2.0" AnchorPane.leftAnchor="35.0" />
+      <Button fx:id="propertiesButton" focusTraversable="false" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" mnemonicParsing="false" onAction="#minimizedPropertiesViewButtonAction" prefHeight="30.0" prefWidth="75.0" rotate="90.0" style="-fx-background-color: transparent;" text="Properties" visible="false" AnchorPane.rightAnchor="-25.0" AnchorPane.topAnchor="88.0" />
+   </children>
+</AnchorPane>

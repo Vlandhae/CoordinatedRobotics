@@ -1,0 +1,35 @@
+.scroll-bar {
+    -fx-pref-width: 16.5;
+    -fx-padding: 0 3 0 3;
+    -fx-background-color: white;
+}
+
+.track-background {
+    -fx-background-color: white;
+}
+
+.increment-button {
+    -fx-background-color: transparent;
+}
+
+.increment-arrow {
+    -fx-background-color: grey;
+}
+
+.decrement-button {
+    -fx-background-color: transparent;
+}
+
+.decrement-arrow {
+    -fx-background-color: grey;
+}
+
+.track {
+    -fx-background-color: transparent;
+}
+
+.thumb {
+    -fx-background-color: grey;
+    -fx-border-radius: 0;
+    -fx-background-radius: 0;
+}
