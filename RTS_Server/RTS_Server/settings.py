@@ -26,7 +26,7 @@ SECRET_KEY = 'A+YaXmI`FPq8qnoRv%MZ1GEm@fWq/8<!,eE1~,+Ra#$IHb*SF$Bbg5T%k~Wu[xm'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
-ALLOWED_HOSTS = ["159.69.196.15"]
+ALLOWED_HOSTS = ["159.69.196.15", "localhost"]
 
 
 # Application definition
@@ -60,7 +60,7 @@ ROOT_URLCONF = 'RTS_Server.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / "templates"],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -82,7 +82,7 @@ WSGI_APPLICATION = 'RTS_Server.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'NAME': BASE_DIR / 'data' / 'db.sqlite3',
     }
 }
 
@@ -122,7 +122,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/4.1/howto/static-files/
 
 STATIC_URL = "static/"
-STATIC_ROOT = "/home/rts/RTS/RTS_Server/static"
+STATIC_ROOT = BASE_DIR / "static"
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.1/ref/settings/#default-auto-field
@@ -170,7 +170,7 @@ REST_FRAMEWORK = {
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': ["/home/rts/RTS/RTS_Server/RTS_Server/templates"],
+        'DIRS': [BASE_DIR / "RTS_Server" / "templates"],
         'APP_DIRS': True,
         'OPTIONS': {
             
