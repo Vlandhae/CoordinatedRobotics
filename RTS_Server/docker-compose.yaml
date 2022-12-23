@@ -1,0 +1,18 @@
+services:
+  rts_server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - DJANGO_LISTEN=0.0.0.0
+        - DJANGO_PORT=8000
+    volumes:
+      - type: volume
+        source: rts_server_vol
+        target: /app/data
+    ports:
+      - 8000:8000
+
+volumes:
+  rts_server_vol:
+
