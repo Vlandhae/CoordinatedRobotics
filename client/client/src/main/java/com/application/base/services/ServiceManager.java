@@ -42,6 +42,7 @@ public class ServiceManager {
 
     public void addSelectionObservers() {
         this.mainClass.addSelectionObserver(this.actionLogContentService);
+        this.mainClass.addSelectionObserver(this.internetService);
     }
 
     public ActionService getActionService() {
