@@ -22,6 +22,7 @@ public class ActionLogContentService implements SelectionObserver {
 
     public ActionLogContentService(InternetService internetService) {
         this.internetService = internetService;
+        this.internetService.setActionLog(this);
         this.actionLogBaseContent = FXCollections.observableArrayList();
         this.actionLogAdditionalContent = FXCollections.observableArrayList();
         this.currentSession = "";

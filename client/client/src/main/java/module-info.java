@@ -12,7 +12,9 @@ module com.application.application {
     requires com.fasterxml.jackson.databind;
     requires org.json;
     requires java.sql;
-    // requires Java.WebSocket;
+    requires org.java_websocket;
+
+
     //requires tyrus.standalone.client;
     //requires javax.websocket.api;
 

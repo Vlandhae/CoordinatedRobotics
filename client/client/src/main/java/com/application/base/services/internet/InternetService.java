@@ -1,10 +1,13 @@
 package com.application.base.services.internet;
 
 import java.net.HttpURLConnection;
+import java.net.URI;
 import java.net.URL;
 import java.util.*;
 
+import com.application.base.actions.Action;
 import com.application.base.main.SelectionObserver;
+import com.application.base.services.actionlog.ActionLogContentService;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -12,28 +15,50 @@ import org.json.JSONObject;
 public class InternetService implements SelectionObserver {
 
     private MyWebSocketClient myWebSocketClient;
+    private ActionLogContentService actionLog;
 
     private static final String LINK_LIST_OF_SESSIONS = "http://159.69.196.15:8000/cars/sessions/";
     private static final String LINK_LIST_OF_CARS_IN_SESSION = "http://159.69.196.15:8000/cars/sessions/";
     private static final String LINK_LIST_FOR_SUBMITTING_COMMANDS = "http://159.69.196.15:8000/cars/sessions/";
+    private static final String SESSION_WS_URL = "ws://159.69.196.15:8000/ws/session/";
 
     public InternetService() {
         this.myWebSocketClient = null;
+    }
+
+    // TODO replace this with good code
+    public void setActionLog(ActionLogContentService actionLog)
+    {
+      this.actionLog = actionLog;
+      if(this.myWebSocketClient != null)
+      {
+        this.myWebSocketClient.setActionLog(actionLog);
+      }
     }
 
     public void connectToWebSocket(String internetAddress) {
         if (myWebSocketClient != null) {
             closeConnectionToWebSocket();
         }
-        myWebSocketClient = new MyWebSocketClient();
-       // myWebSocketClient.openConnection(internetAddress);
+        try{
+          URI uri = new URI(internetAddress);
+          myWebSocketClient = new MyWebSocketClient(uri, this.actionLog);
+          myWebSocketClient.connect();
+        }catch (Exception e)
+        {
+          if (actionLog != null)
+          {
+            actionLog.addAdditionalContent("invalid uri given to websocket");
+          }
+          myWebSocketClient = null;
+        }
     }
 
     public void closeConnectionToWebSocket() {
         if (myWebSocketClient == null) {
             return;
         }
-       // myWebSocketClient.closeConnection();
+        myWebSocketClient.closeConnection();
         myWebSocketClient = null;
     }
 
@@ -121,14 +146,16 @@ public class InternetService implements SelectionObserver {
             return;
         }
      //   myWebSocketClient.ensureConnection();
-     //   myWebSocketClient.sendCommand(command);
+        myWebSocketClient.sendCommand(command);
     }
 
     @Override
     public void selectionChanged(String newValue) {
+      actionLog.addAdditionalContent("selection changed" + newValue);
         if (newValue.isBlank()) {
             return;
         }
-        connectToWebSocket(LINK_LIST_FOR_SUBMITTING_COMMANDS + newValue + "/");
+        // new value has to be the name of an active session
+        connectToWebSocket(SESSION_WS_URL + newValue + "/");
     }
 }
