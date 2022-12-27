@@ -3,6 +3,8 @@ plugins {
     id 'application'
     id 'org.openjfx.javafxplugin' version '0.0.10'
     id 'org.beryx.jlink' version '2.24.1'
+    id "org.gradlex.extra-java-module-info" version "1.1"
+
 }
 
 group 'com.application'
@@ -23,6 +25,7 @@ tasks.withType(JavaCompile) {
     options.encoding = 'UTF-8'
 }
 
+
 application {
     mainModule = 'com.application.base.main'
     mainClass = 'com.application.base.main.MainClass'
@@ -33,7 +36,23 @@ javafx {
     modules = ['javafx.controls', 'javafx.fxml', 'javafx.web']
 }
 
+extraJavaModuleInfo {
+    module("org.slf4j:slf4j-api", "org.slf4j"){
+      exports("org.slf4j")
+    }
+    module("org.java-websocket:Java-WebSocket", "org.java_websocket") {
+      requires("org.slf4j")
+      exports("org.java_websocket")
+      exports("org.java_websocket.client")
+      exports("org.java_websocket.drafts")
+      exports("org.java_websocket.handshake")
+    }
+
+  }
+
 dependencies {
+    implementation('org.java-websocket:Java-WebSocket:1.5.3')
+    implementation 'org.java-websocket:Java-WebSocket:1.5.3'
     implementation('org.controlsfx:controlsfx:11.1.0')
     implementation('com.dlsc.formsfx:formsfx-core:11.3.2') {
         exclude(group: 'org.openjfx')
