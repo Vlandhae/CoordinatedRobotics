@@ -10,8 +10,8 @@ ENV DJANGO_LISTEN ${DJANGO_LISTEN}
 ENV DJANGO_PORT ${DJANGO_PORT}
 
 RUN python -m pip install -r requirements.txt
-RUN python manage.py makemigrations
-RUN python manage.py migrate
+#RUN python manage.py makemigrations
+#RUN python manage.py migrate
 RUN python manage.py collectstatic
 
 EXPOSE ${DJANGO_PORT}
