@@ -13,3 +13,5 @@ requests>=2.18.4
 uritemplate>= 4.1.1
 whitenoise>=6.2.0
 psycopg2-binary>=2.9.3
+scipy>=1.10
+shapely>=2.0.0
