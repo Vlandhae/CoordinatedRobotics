@@ -1,5 +1,6 @@
 services:
   db:
+    hostname: db
     image: postgres:13
     volumes:
       - postgres_data:/var/lib/postgresql/data/
@@ -11,6 +12,8 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    ports:
+      - 5432:5432
       
   rts_server:
     build:
