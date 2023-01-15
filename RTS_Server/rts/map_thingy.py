@@ -13,10 +13,10 @@ class RTS_Map():
         self.explored_squares = []
         self.starting_point = (0,0)
         # size of the current grid represented by distance of border from starting point in each direction
-        self.up_squares = 10
-        self.down_squares = 10
-        self.left_squares = 10
-        self.right_squares = 10
+        self.up_squares = 50
+        self.down_squares = 50
+        self.left_squares = 50
+        self.right_squares = 50
 
     def update_size(up_squares, down_squares, left_squares, right_squares):
         self.left_squares = left_squares
@@ -49,10 +49,10 @@ class RTS_Map():
         self.explored_bound = [self.explored_bound[i] for i in hull]
 
     def to_list(self, include_visited : bool = False):
-        # create the array initialized with zeroes
+        # create the array initialized with zeroes        
         ret = np.zeros((self.up_squares + self.down_squares, self.left_squares + self.right_squares))
         if include_visited == False:
-            for el in self.obstacles:
+            for el in self.obstacles:                
                 x = el[0]
                 y = el[1]
                 ret[x][y] = 1                

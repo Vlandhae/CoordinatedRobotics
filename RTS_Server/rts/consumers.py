@@ -13,6 +13,7 @@ class CarConsumer(WebsocketConsumer):
         self.room_name = self.scope["url_route"]["kwargs"]["car_id"]
         self.room_group_name = f"group_{self.room_name}"
         self.maps = []
+        self.mapped_sessions = set()
         print(self.room_group_name)
         # Join room group
         async_to_sync(self.channel_layer.group_add)(
@@ -41,6 +42,7 @@ class CarConsumer(WebsocketConsumer):
                 else:
                     m = m.first()
                 self.maps.append(RTS_Map(m.id))
+                self.mapped_sessions.add(m.session.id)
 
             self.car.save()
         except Car.DoesNotExist:
@@ -50,11 +52,14 @@ class CarConsumer(WebsocketConsumer):
         self.accept()
         
     def update_maps(self):
+        print(len(self.maps), "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
         if self.car is None:
             return
         sessions = CarSession.objects.filter(cars__id=self.car.id)
-        print("sessions", sessions)
+        
         for session in sessions:
+            if session.id in self.mapped_sessions:
+                continue
             # get all maps of sessions the car is connected to
             #TODO leave maps when the car leaves the session 
             m = RTSMap.objects.filter(session__id=session.id)
@@ -62,7 +67,7 @@ class CarConsumer(WebsocketConsumer):
                 m = RTSMap(session=session)
                 m.save()
             else:
-                m = m.first()
+                m = m.first()            
             self.maps.append(RTS_Map(m.id))
     
     def disconnect(self, close_code):
@@ -123,6 +128,19 @@ class CarConsumer(WebsocketConsumer):
                     print(m.explored_squares)
                     print(m.to_list())
                     print("test")
+            elif part[0] == "M":
+                if len(self.maps) < 1:
+                    return
+                map_to_send = self.maps[0].to_list()                
+                for row in range(len(map_to_send)):
+                    for col in range(len(map_to_send[row])):
+                        occ = bool(map_to_send[row, col] == 1)
+                        if row == 5 and col < 20:
+                            print(row, col, occ, type(occ), map_to_send[row,col])
+                            print(rts.parsers.encode_position_data(row, col, occ))
+                            self.send(text_data=rts.parsers.encode_position_data(row, col, occ))
+
+
 
     def system(self, event):
         print("received system command")
@@ -137,7 +155,7 @@ class CarConsumer(WebsocketConsumer):
             if self.car is not None:
                 self.car.current_command = com.upper()
                 self.car.save()
-            self.send(text_data=json.dumps(com))
+            self.send(text_data=rts.parsers.encode_command(com))
 
     def carinfo(self, event):
         print("carinfo received", event)
@@ -147,7 +165,7 @@ class CarConsumer(WebsocketConsumer):
         # TODO move them to constants
         end_char = ";"
         message_begin = "Y"
-        self.send(text_data=f"{message_begin}{msg}{end_char}")
+        #self.send(text_data=f"{message_begin}{msg}{end_char}")
 
 
 class SessionConsumer(WebsocketConsumer):

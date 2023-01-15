@@ -1,5 +1,5 @@
-from base64 import b64decode
-from rts.constants import MESSAGE_TYPES
+from base64 import b64decode,b64encode
+from rts.constants import MESSAGE_TYPES, get_message_type, MESSAGE_TYPES_MAPPING, END_MESSAGE_IDENTIFIER
 
 
 def parse_carinfo(msg):
@@ -27,6 +27,21 @@ def parse_car_status(msg):
 
 def get_parser(msg_type : MESSAGE_TYPES):
     return parser_map.get(msg_type, lambda x: tuple())
+
+def encode_command(msg):
+    command_identifier = MESSAGE_TYPES_MAPPING.get(MESSAGE_TYPES.command)
+    return f"{command_identifier}{msg}{END_MESSAGE_IDENTIFIER}"
+
+def encode_position_data(x : int, y : int, occupied : bool):
+    xb = x.to_bytes(4, "little")
+    yb = y.to_bytes(4, "little")
+    ob = occupied.to_bytes(1, "little")
+    to_enc = xb + yb + ob
+    print(to_enc)
+    enc = b64encode(to_enc)
+    print(enc)
+    identifier = MESSAGE_TYPES_MAPPING.get(MESSAGE_TYPES.position_data)
+    return f"{identifier}{enc.decode('utf-8')}{END_MESSAGE_IDENTIFIER}"
 
 
 parser_map = {
