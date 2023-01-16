@@ -52,7 +52,6 @@ class CarConsumer(WebsocketConsumer):
         self.accept()
         
     def update_maps(self):
-        print(len(self.maps), "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
         if self.car is None:
             return
         sessions = CarSession.objects.filter(cars__id=self.car.id)
@@ -85,7 +84,8 @@ class CarConsumer(WebsocketConsumer):
     def receive(self, text_data):
         self.update_maps()
         msg = text_data
-        print(msg)
+        print("msg received: ", msg)
+        print("msg end")
         if msg == "info":
             if self.car is None:
                 self.send("car does not exist")
@@ -95,51 +95,56 @@ class CarConsumer(WebsocketConsumer):
             return
         if msg == GROUP_CLOSING_COMMAND:
             async_to_sync(self.channel_layer.group_discard)(self.room_group_name, self.channel_name)
-        # allow direct commands from cars for now
-        if msg in COMMAND_LIST:
-            async_to_sync(self.channel_layer.group_send)(
-                self.room_group_name, {"type": "command", "command": msg}
-        )
+                
         # broadcast all data received from cars as a carinfo event
         async_to_sync(self.channel_layer.group_send)(
             self.room_group_name, {"type": "carinfo", "message": msg}
-        )    
-        # TODO replace with handler 
+        )         
+        # TODO filter some messages
+        if msg == "Connected": 
+            return
+        self.handle_car_message(msg)
 
+    def handle_car_message(self, msg):        
         # split the individual messages
         parts = msg.split(";")
         if msg[-1] != ";":
             pass
             # TODO make sure partial messages dont get lost
-
         # remove any empty strings
         parts = list(filter(len, parts))
-        for part in parts:
-            msg_type = get_message_type(msg[0])
-            # TODO parse the message usign the correct parser
-            # TODO handle the parsed message
-            if part[0] == "P":       
-                data = rts.parsers.parse_position_info(msg[1:])
-                print(data)         
+        for part in parts:            
+            msg_type = get_message_type(part[0])          
+            print(msg_type)
+            msg_content = part[1:]  
+            if msg_type == MESSAGE_TYPES.position_info:       
+                print(msg)
+                data = rts.parsers.parse_position_info(msg_content)    
+                if data is None:
+                    return            
                 for m in self.maps:
                     x, y, occupied = data
-                    m.add_point(x, y, occupied)
-                    print(m.obstacles)
-                    print(m.explored_squares)
-                    print(m.to_list())
-                    print("test")
-            elif part[0] == "M":
+                    m.add_point(x, y, occupied)                        
+            elif msg_type == MESSAGE_TYPES.position_data_request:
+                # ensure that a map exists
                 if len(self.maps) < 1:
                     return
+                # TODO what if multiple maps exist
                 map_to_send = self.maps[0].to_list()                
                 for row in range(len(map_to_send)):
                     for col in range(len(map_to_send[row])):
-                        occ = bool(map_to_send[row, col] == 1)
-                        if row == 5 and col < 20:
-                            print(row, col, occ, type(occ), map_to_send[row,col])
-                            print(rts.parsers.encode_position_data(row, col, occ))
-                            self.send(text_data=rts.parsers.encode_position_data(row, col, occ))
-
+                        occ = bool(map_to_send[row, col] == 1)                        
+                        self.send(text_data=rts.parsers.encode_position_data(row, col, occ))
+            elif msg_type == MESSAGE_TYPES.obstacle_position_request:
+                print("sending obstacle poistioin")
+                map_to_send = self.maps[0]
+                
+                obstacles = map_to_send.obstacles
+                for obstacle in obstacles:
+                    x, y = obstacle
+                    self.send(rts.parsers.encode_position_data(x, y, True))
+                
+                
 
 
     def system(self, event):

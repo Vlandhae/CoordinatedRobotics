@@ -5,19 +5,29 @@ from rts.constants import MESSAGE_TYPES, get_message_type, MESSAGE_TYPES_MAPPING
 def parse_carinfo(msg):
     pass
 
-def parse_position_info(msg):
-    
+def parse_position_info(msg):    
+    if len(msg) != 12:
+        return None
     enc = msg.encode("utf-8")
+    print(msg)
+    print(len(msg))
     dec = b64decode(enc)
-    print(dec)
-    print(type(dec))
-    print(len(dec))
     x = int.from_bytes(dec[:4], "little")
     y = int.from_bytes(dec[4:8], "little")
     occupied = bool(dec[8])
-    print(x, y, occupied)
     return (x,y,occupied)
 
+def parse_position_info_request(msg):    
+    enc = msg.encode("utf-8")
+    dec = b64decode(enc)    
+    print(type(dec))
+    print(len(dec))
+    # TODO better error handling
+    if len(dec != 8):
+        return
+    x = int.from_bytes(dec[:4], "little")
+    y = int.from_bytes(dec[4:8], "little")
+    return (x,y)
 
 def parse_command(msg):
     pass
@@ -39,7 +49,7 @@ def encode_position_data(x : int, y : int, occupied : bool):
     to_enc = xb + yb + ob
     print(to_enc)
     enc = b64encode(to_enc)
-    print(enc)
+    print(enc.decode("utf-8"))
     identifier = MESSAGE_TYPES_MAPPING.get(MESSAGE_TYPES.position_data)
     return f"{identifier}{enc.decode('utf-8')}{END_MESSAGE_IDENTIFIER}"
 
