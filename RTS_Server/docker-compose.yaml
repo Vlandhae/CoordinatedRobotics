@@ -1,0 +1,39 @@
+services:
+  db:
+    hostname: db
+    image: postgres:13
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    environment:
+      - "POSTGRES_HOST_AUTH_METHOD=trust"
+    container_name: db
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    ports:
+      - 5432:5432
+      
+  rts_server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - DJANGO_LISTEN=0.0.0.0
+        - DJANGO_PORT=8000
+    volumes:
+      - type: volume
+        source: rts_server_vol
+        target: /app/data
+    ports:
+      - 8000:8000
+    depends_on: 
+      db:
+        condition: service_healthy
+  
+
+volumes:
+  postgres_data:
+  rts_server_vol:
+
