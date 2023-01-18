@@ -78,7 +78,6 @@ function_xxx(long x, long s, long e) //f(x)
     return false;
 }
 
-/*运动方向控制序列*/
 enum SmartRobotCarMotionControl
 {
   Forward,       //(1)
@@ -92,19 +91,18 @@ enum SmartRobotCarMotionControl
   stop_it        //(9)
 };               //direction方向:（1）、（2）、 （3）、（4）、（5）、（6）
 
-/*模式控制序列*/
+
 enum SmartRobotCarFunctionalModel
 {
-  Standby_mode,           /*空闲模式*/
-  TraceBased_mode,        /*循迹模式*/
-  ObstacleAvoidance_mode, /*避障模式*/
-  Follow_mode,            /*跟随模式*/
-  Rocker_mode,            /*摇杆模式*/
+  Standby_mode,          
+  TraceBased_mode,        
+  ObstacleAvoidance_mode, 
+  Follow_mode,           
+  Rocker_mode,            
   Spy_mode,
   Blind_mode
 };
 
-/*控制管理成员*/
 struct Application_xxx
 {
   SmartRobotCarMotionControl Motion_Control;
@@ -121,13 +119,11 @@ void ApplicationFunctionSet_SmartRobotCarMotionControl(SmartRobotCarMotionContro
 static void Left_Tick()
 {
   count_l++;
-  //Serial.println(count_l);
 }
 
 static void Right_Tick()
 {
   count_r++;
-  // Serial.println(count_r);
 }
 
 void ApplicationFunctionSet::ApplicationFunctionSet_Init(void)
@@ -188,43 +184,22 @@ void ApplicationFunctionSet::DistanceCalculation(void)
   case /* constant-expression */ Forward:
     tmp_l = 1;
     tmp_r = 1;
-    d_l = d_tick*count_l*tmp_l;
-    d_r = d_tick*count_r*tmp_r;
-    d_avg = (d_l+d_r)/2;
-    pos[0] += d_avg * cos(Yaw);
-    pos[1] += d_avg * sin(Yaw);
     break;
   case /* constant-expression */ Backward:
     tmp_l = -1;
-    tmp_r = -1;
-    d_l = d_tick*count_l*tmp_l;
-    d_r = d_tick*count_r*tmp_r;
-    d_avg = (d_l+d_r)/2;
-    pos[0] += d_avg * cos(Yaw);
-    pos[1] += d_avg * sin(Yaw);
-    break;
-  case /* constant-expression */ Left:
-    tmp_l = -1;
-    tmp_r = 1;
-    break;
-  case /* constant-expression */ Right:
-    tmp_l = 1;
     tmp_r = -1;
     break;
   default:
     break;
   }
+  
+  d_l = d_tick*count_l*tmp_l;
+  d_r = d_tick*count_r*tmp_r;
+  d_avg = (d_l+d_r)/2;
+  pos[0] += d_avg * cos(Yaw);
+  pos[1] += d_avg * sin(Yaw);
   count_l = 0;
   count_r = 0;
-  // Serial.println(direction);
-  // Serial.print(pos[0]);
-  // Serial.print(", ");
-  // Serial.println(pos[1]);
-  // Serial.println(direction);
-  if(direction == stop_it){
-
-  }
-  
 
   return;
 }
@@ -246,8 +221,8 @@ void ApplicationFunctionSet::SetOccupancyGrid(void)
   pos_servo[0] = (d_c_s * cos(Yaw)) + pos[0];
   pos_servo[1] = (d_c_s * sin(Yaw)) + pos[1];
 
-  yaw_ges = 90 - yaw_servo;   // Winkel des Sensors im richtigen Format
-  // Distance zum Objekt vom Servo aus in mm!!
+  yaw_ges = 90 - yaw_servo;  
+
   d_s_o = d_s_u + obstacle_dist*10;
 
   // x, y des Objekts
@@ -260,7 +235,7 @@ void ApplicationFunctionSet::SetOccupancyGrid(void)
 
   if (abs(step_x) > 50 || abs(step_y) > 50)
   {
-    //Serial.println("Out of bounds");
+    Serial.println("Out of bounds");
   }
   else{
     //occ_grid[step_x + sizeof(occ_grid[0])/2][step_y + sizeof(occ_grid[0])/2] = true;
@@ -270,20 +245,6 @@ void ApplicationFunctionSet::SetOccupancyGrid(void)
     sendPositionData();
     // an Server
   }
-
-
-  // Ausgabe
-  // Serial.println("Servo Position");
-  // Serial.println(pos_servo[0]);
-  // Serial.println(pos_servo[1]);
-  // Serial.println(d_s_o);
-  // Serial.println("Winkel");
-  // Serial.println(Yaw);
-  // Serial.println(yaw_ges);
-  // Serial.println("Hindernis");
-  // Serial.println(obstacle_pos[0]);
-  // Serial.println(obstacle_pos[1]);
-  // Serial.println(" ");
 
   return;
 }
@@ -299,15 +260,13 @@ boolean ApplicationFunctionSet::GetObstacleDistance(float y_tmp)
   int step_x;
   int step_y;
 
-  // alle 2 cm prüfen, 20 cm lang, also 10 schritte
-  // set pos
   pos_servo_tmp[0] = (d_c_s * cos(Yaw)) + pos[0];
   pos_servo_tmp[1] = (d_c_s * sin(Yaw)) + pos[1];
 
   for(int step = 1; step <= 4; step ++)
   {
     d_s_o_tmp = step*70;
-    // Pos der zu prüfenden Stelle
+    
     pos_tmp[0] = pos_servo_tmp[0] + (cos(y) * d_s_o_tmp);
     pos_tmp[1] = pos_servo_tmp[1] + (sin(y) * d_s_o_tmp);
 
@@ -318,16 +277,6 @@ boolean ApplicationFunctionSet::GetObstacleDistance(float y_tmp)
     Serial.println(obst_m[0][1]);
     Serial.println(step_x);
     Serial.println(step_y);
-
-
-    // for(int i = 0; i<=sizeof(obst_m); i++)
-    // {
-    //   if(obst_m[i][0] == step_x && obst_m[i][1] == step_y)
-    //   {
-    //     Serial.print("Obstacle");
-    //     return true;
-    //   }
-    // }
     
   } 
 
@@ -344,7 +293,7 @@ static void delay_xxx(uint16_t _ms)
   }
 }
 
-// Obstacle Avoidance Mode
+// Obstacle Avoidance Mode / Spy mode
 
 void ApplicationFunctionSet::ApplicationFunctionSet_Obstacle(void)
 {
@@ -390,11 +339,9 @@ void ApplicationFunctionSet::ApplicationFunctionSet_Obstacle(void)
             ApplicationFunctionSet_SmartRobotCarMotionControl(Backward, 50);
             dir_tmp = Backward;
             delay_xxx(500);
-            //DistanceCalculation(Backward);
             ApplicationFunctionSet_SmartRobotCarMotionControl(Right, 50);
             dir_tmp = Right;
             delay_xxx(50);
-            //DistanceCalculation(Right);
             first_is = true;
             break;
           }
@@ -408,19 +355,16 @@ void ApplicationFunctionSet::ApplicationFunctionSet_Obstacle(void)
             ApplicationFunctionSet_SmartRobotCarMotionControl(Right, 50);
             dir_tmp = Right;
             delay_xxx(50);
-            //DistanceCalculation(Right);
             break;
           case 3:
             ApplicationFunctionSet_SmartRobotCarMotionControl(Forward, 50);
             dir_tmp = Forward;
             delay_xxx(50);
-            //DistanceCalculation(Forward);
             break;
           case 5:
             ApplicationFunctionSet_SmartRobotCarMotionControl(Left, 50);
             dir_tmp = Left;
             delay_xxx(50);
-            //DistanceCalculation(Left);
             break;
           }
 
@@ -481,16 +425,14 @@ void ApplicationFunctionSet::ApplicationFunctionSet_Blind(void)
     {
       ApplicationFunctionSet_SmartRobotCarMotionControl(Forward, 50);
       dir_tmp = Forward;
-      // Blickrichtung übergeben
       get_Distance = Application_FunctionSet.GetObstacleDistance(y_tmp);
 
       if (get_Distance == true)
       {
         ApplicationFunctionSet_SmartRobotCarMotionControl(stop_it, 0);
-        Serial.println("STOOOOP");
+
         for (uint8_t i = 1; i < 6; i += 2) //1、3、5 Omnidirectional detection of obstacle avoidance status
         {
-          // Blick um 30 Grad wenden
           y_tmp = 30 * i;
           delay_xxx(1);
           get_Distance = Application_FunctionSet.GetObstacleDistance(y_tmp);
@@ -634,7 +576,7 @@ static void ApplicationFunctionSet_SmartRobotCarMotionControl(SmartRobotCarMotio
     {
       AppMotor.DeviceDriverSet_Motor_control(/*direction_A*/ direction_just, /*speed_A*/ speed,
                                              /*direction_B*/ direction_just, /*speed_B*/ speed, /*controlED*/ control_enable); //Motor control
-      //DistanceCalculation(Forward);
+     
     }
     else
     {
@@ -651,7 +593,7 @@ static void ApplicationFunctionSet_SmartRobotCarMotionControl(SmartRobotCarMotio
 
       AppMotor.DeviceDriverSet_Motor_control(/*direction_A*/ direction_back, /*speed_A*/ speed,
                                              /*direction_B*/ direction_back, /*speed_B*/ speed, /*controlED*/ control_enable); //Motor control
-      //DistanceCalculation(Backward);
+
     }
     else
     {
@@ -666,13 +608,13 @@ static void ApplicationFunctionSet_SmartRobotCarMotionControl(SmartRobotCarMotio
     directionRecord = 3;
     AppMotor.DeviceDriverSet_Motor_control(/*direction_A*/ direction_just, /*speed_A*/ UpperLimit,
                                            /*direction_B*/ direction_back, /*speed_B*/ UpperLimit, /*controlED*/ control_enable); //Motor control
-    // DistanceCalculation(Left);
+
     break;
   case Right:
     directionRecord = 4;
     AppMotor.DeviceDriverSet_Motor_control(/*direction_A*/ direction_back, /*speed_A*/ UpperLimit,
                                            /*direction_B*/ direction_just, /*speed_B*/ UpperLimit, /*controlED*/ control_enable); //Motor control
-    // DistanceCalculation(Right);
+
     break;
   case LeftForward:
     directionRecord = 5;
@@ -756,7 +698,7 @@ void ApplicationFunctionSet::ApplicationFunctionSet_Rocker(void)
   if (Application_SmartRobotCarxxx0.Functional_Mode == Rocker_mode)
   {
     ApplicationFunctionSet_SmartRobotCarMotionControl(Application_SmartRobotCarxxx0.Motion_Control /*direction*/, Rocker_CarSpeed /*speed*/);
-    //DistanceCalculation(Application_SmartRobotCarxxx0.Motion_Control);
+
   }
 }
 
@@ -816,7 +758,6 @@ void ApplicationFunctionSet::ApplicationFunctionSet_Standby(void)
         {
           is_ED = false;
           AppMPU6050getdata.MPU6050_calibration();
-          //Serial.print("neukalibrierung");
         }
       }
     }
@@ -873,22 +814,11 @@ void ApplicationFunctionSet::ApplicationFunctionSet_IRrecv(void)
   if (AppIRrecv.DeviceDriverSet_IRrecv_Get(&IRrecv_button /*out*/))
   {
     IRrecv_en = true;
-    // wenn button gedrückt, abspeichern
     IRrecv_button_tmp = IRrecv_en;
-    //Serial.println(IRrecv_button_tmp);
   }
   else{
     Application_SmartRobotCarxxx0.Motion_Control = stop_it;
-    // wenn button nicht gedrückt, prüfen ob gedrückt war
-    if(IRrecv_button_tmp==true){
-        // falls ja, alte Bewegungsrichtung übertragen
-        //DistanceCalculation(m_old);
-        //Serial.println(m_old);
-    }
-    // Temporärer button löschen
-    IRrecv_button_tmp = false;
   }
-  // wenn button gedrückt
   if (true == IRrecv_en)
   {
     // Bewegungsrichtung ändern
@@ -968,14 +898,11 @@ void ApplicationFunctionSet::ApplicationFunctionSet_IRrecv(void)
       IRrecv_en = false;
       AppIRrecv.IR_PreMillis = millis();
     }
-    // alte Bewegungsrichtung abspeichern
     m_old = Application_SmartRobotCarxxx0.Motion_Control;
-    //Serial.println(m_old);
-    //DistanceCalculation(Application_SmartRobotCarxxx0.Motion_Control);
   }
 }
 
-// SErver Functions
+// Server Functions
 
 void ApplicationFunctionSet::handleRemoteCommand(unsigned char* begin, int length)
 {
@@ -1059,13 +986,9 @@ float ApplicationFunctionSet::handleWebsocketMessage(unsigned char* payload, int
     switch(type)
     {
       case 'M':
-        //Application_FunctionSet.handlePositionData(begin, currentLength);
         createMatrix(current.charAt(1), current.charAt(2));
-        //Application_FunctionSet.setDoIt();
         break;
       case 'C':
-      Serial.println("ccc");
-       Serial.println(current.charAt(1));
         Application_FunctionSet.handleRemoteCommand(begin, currentLength);
         break;
       default:
@@ -1077,38 +1000,5 @@ float ApplicationFunctionSet::handleWebsocketMessage(unsigned char* payload, int
   return nextStart;
 }
 
-void ApplicationFunctionSet::handlePositionData(unsigned char* start, int length)
-{
-  // if(length != 13)
-  // {
-  //   return;
-  // }
-  // unsigned char buf[16]{0};
-  // // + 1 to skip the identifier at the start of the string
-  // const auto size_m = decode_base64(start + 1, length - 1, buf);
-  // uint32_t x = 0;
-  // uint32_t y = 0;
-  // //bool occupied = buf[8];
-  // // for(int i = 0; i < size; ++i)
-  // // {
-  // //   Serial.printf("%02x", buf[i]);
-  // // }
-  
 
-  // memcpy(&x, buf, 4);
-  // memcpy(&y, buf+4, 4);
-  // uint8_t x = 
-
-  // obst_m[matrix_i][0] = x;
-  // obst_m[matrix_i][1] = y;
-  // Serial.println(obst_m[matrix_i][0]);
-  // Serial.println(obst_m[matrix_i][1]);
-  // matrix_i ++;
-
-  //TODO handle
-  //Serial.printf("%d %d %x\n", x,y,occupied);
-  // Serial.println(x);
-  // Serial.println(y);
-  // Serial.println(occupied);
-}
 
